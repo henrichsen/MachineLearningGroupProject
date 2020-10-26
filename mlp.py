@@ -102,10 +102,10 @@ class BPClassifier(BaseEstimator, ClassifierMixin):
             k_layer_errors = h_errors[start_h_index:start_h_index + self.hidden_layer_widths[i]]
             if i - 1 != -1:
                 w_index = start_w_index - (self.hidden_layer_widths[i - 1] + 1) * self.hidden_layer_widths[i]  # + 1 for dat bias
-        # print("h_errors", h_errors)
-        # print("o_errors", o_errors)
-        # print("Descending gradient...")
-        # print("\n")
+        print("h_errors", h_errors)
+        print("o_errors", o_errors)
+        print("Descending gradient...")
+        print("\n")
 
         k_errors = o_errors
         h_index = len(hiddens)
@@ -171,40 +171,31 @@ class BPClassifier(BaseEstimator, ClassifierMixin):
         noImproveCount = 0
         epochs = 0
 
-        self.lr = .4
-        for i in range(1):
-            while noImproveCount < 10:
-                for j in range(X.shape[0]):
-                    #print(self.weights)
-                    #print("Input vector: ", X[j])
-                    #print("Target output: ", y[j])
-                    #print("Forward propagating...")
-                    self.hidden_layer_values, self.output_values = self.calculateOutputs(X[j], self.hidden_layer_values, self.output_values)
-                    #print("Predicted output: ", self.output_values)
-                    #print("Backward propagating...")
-                    self.updateWeights(X[j], y[j], self.hidden_layer_values, self.output_values)
-                # do accuracy calculations for stopping parameter
-                accuracy = float("{:.2f}".format(self.score(v_X, v_y)))
-                print("v accuracy: ", accuracy)
-                if accuracy > maxAccuracy:
-                    maxAccuracy = accuracy
-                    best_weights = self.weights.copy()
-                    noImproveCount = 0
-                else:
-                    noImproveCount += 1
-                if self.shuffle:
-                    X, y = self._shuffle_data(X, y)
-                epochs += 1
-            self.weights = best_weights
-            print("Total epochs: ", epochs)
-            self.get_stuff_for_graph(X, y, v_X, v_y, t_X, t_y)
-            """
-            print(self.hidden_layer_widths[0])
-            self.hidden_layer_widths[0] *= 2
-            print(self.hidden_layer_widths[0])
-            self.hidden_layer_values = np.zeros(self.hidden_layer_widths[0])
-            self.weights = self.initialize_weights(X)
-            """
+        while noImproveCount < 500:
+            for j in range(X.shape[0]):
+                print(self.weights)
+                print("Input vector: ", X[j])
+                print("Target output: ", y[j])
+                print("Forward propagating...")
+                self.hidden_layer_values, self.output_values = self.calculateOutputs(X[j], self.hidden_layer_values, self.output_values)
+                print("Predicted output: ", self.output_values)
+                print("Backward propagating...")
+                self.updateWeights(X[j], y[j], self.hidden_layer_values, self.output_values)
+            # do accuracy calculations for stopping parameter
+            accuracy = float("{:.2f}".format(self.score(v_X, v_y)))
+            print("v accuracy: ", accuracy)
+            if accuracy > maxAccuracy:
+                maxAccuracy = accuracy
+                best_weights = self.weights.copy()
+                noImproveCount = 0
+            else:
+                noImproveCount += 1
+            if self.shuffle:
+                X, y = self._shuffle_data(X, y)
+            epochs += 1
+        self.weights = best_weights
+        print("Total epochs: ", epochs)
+        self.get_stuff_for_graph(X, y, v_X, v_y, t_X, t_y)
 
         return self
 
@@ -249,19 +240,9 @@ class BPClassifier(BaseEstimator, ClassifierMixin):
         predictions = self.predict(X)
         same_count = 0
         for i in range(y.shape[0]):
-            for j in range(y.shape[1]):
-                if int(y[i][j]) == 1:
-                    if round(predictions[i][j]) == 1:
-                        same_count += 1
-                        break
-            """
-            if round(predictions[i][0]) == 1 and round(predictions[i][1]) == 0 and round(predictions[i][2]) == 0:
-                same_count += 1 if int(y[i][0]) == 1 else 0
-            elif round(predictions[i][0]) == 0 and round(predictions[i][1]) == 1 and round(predictions[i][2]) == 0:
-                same_count += 1 if int(y[i][1]) == 1 else 0
-            elif round(predictions[i][0]) == 0 and round(predictions[i][1]) == 0 and round(predictions[i][2]) == 1:
-                same_count += 1 if int(y[i][2]) == 1 else 0
-            """
+            if y[i][0] + .05 > predictions[i][0] > y[i][0] - .05:
+                if y[i][1] + .05 > predictions[i][1] > y[i][1] - .05:
+                    same_count += 1
         return same_count / y.shape[0]
 
     def train_test_split(self, X, y):
