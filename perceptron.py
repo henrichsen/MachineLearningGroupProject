@@ -1,5 +1,7 @@
 import numpy as np
 from sklearn import linear_model
+from sklearn.utils import shuffle
+from sklearn.metrics import mean_squared_error
 from scipy.io import loadmat
 import os
 import sys
@@ -21,15 +23,15 @@ mat
 p_act = np.array(mat['xk'][:, 0:4])
 p_ref = np.array(mat['uk'])
 u_v = np.array(mat['xk'][:, 6:])
+split=int(.75*len(p_act))
 
-# max = np.amax(p_act)
-# min = np.amin(p_act)
-# p_act = normalize(p_act)
-# u_v = normalize(u_v)
-print(u_v)
+
 sk_u = linear_model.LinearRegression(normalize=True)
-sk_u.fit(p_act, u_v)
-print(sk_u.predict(p_act))
+for i in range(100):
+    p_act,u_v=shuffle(p_act,u_v)
+    sk_u.fit(p_act[:split], u_v[:split])
+    prediction=sk_u.predict(p_act[split:])
+    print(mean_squared_error(prediction,u_v[split:]))
 
 np.savetxt('u_v.csv',u_v,delimiter=',',newline=';')
 np.savetxt('LinearRegression_Predict_u_v.csv',sk_u.predict(p_act),delimiter=',',newline=';')
